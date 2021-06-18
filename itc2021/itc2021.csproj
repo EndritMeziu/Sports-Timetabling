@@ -5,4 +5,11 @@
     <TargetFramework>net4.7.2</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Deserializer\Classes\ConstraintClasses\" />
+    <Folder Include="Deserializer\Classes\ResourcesClasses\" />
+    <Folder Include="Deserializer\Classes\ObjectiveFunctionClasses\" />
+    <Folder Include="Deserializer\Classes\StructureClasses\" />
+  </ItemGroup>
+
 </Project>
