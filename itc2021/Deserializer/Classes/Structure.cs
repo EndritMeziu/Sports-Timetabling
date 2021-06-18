@@ -1,4 +1,5 @@
-﻿using System;
+﻿using itc2021.Deserializer.Classes.StructureClasses;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +11,7 @@ namespace itc2021.Deserializer.Classes
     [XmlRoot(ElementName = "Structure")]
     public class Structure
     {
+        [XmlElement(ElementName = "Format")]
+        public Format Format { get; set; }
     }
 }

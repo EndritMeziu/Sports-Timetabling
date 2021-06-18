@@ -10,5 +10,6 @@ namespace itc2021.Deserializer.Classes
     [XmlRoot(ElementName = "ObjectiveFunction")]
     public class ObjectiveFunction
     {
+
     }
 }
