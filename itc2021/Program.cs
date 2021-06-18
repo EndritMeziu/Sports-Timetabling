@@ -9,7 +9,9 @@ namespace itc2021
     {
         static void Main(string[] args)
         {
-            
+            XmlDeserializer deserializer = new XmlDeserializer();
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test3.xml");
+            int x = 2;
         }
     }
 }

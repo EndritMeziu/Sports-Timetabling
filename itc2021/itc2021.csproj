@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <Folder Include="Deserializer\Classes\ConstraintClasses\" />
-    <Folder Include="Deserializer\Classes\ResourcesClasses\" />
   </ItemGroup>
 
 </Project>

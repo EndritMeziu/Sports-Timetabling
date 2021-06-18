@@ -10,11 +10,11 @@ namespace itc2021.Deserializer.Classes.ResourcesClasses
     [XmlRoot(ElementName = "Leagues")]
     public class Leagues
     {
-        [XmlElement (ElementName = "League")]
+        [XmlElement (ElementName = "league")]
         public League League { get; set; }
     }
 
-    [XmlRoot(ElementName = "League")]
+    [XmlRoot(ElementName = "league")]
     public class League
     {
         [XmlAttribute(AttributeName = "id")]
