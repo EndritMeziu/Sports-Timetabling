@@ -8,7 +8,6 @@
   <ItemGroup>
     <Folder Include="Deserializer\Classes\ConstraintClasses\" />
     <Folder Include="Deserializer\Classes\ResourcesClasses\" />
-    <Folder Include="Deserializer\Classes\ObjectiveFunctionClasses\" />
   </ItemGroup>
 
 </Project>
