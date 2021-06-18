@@ -5,8 +5,4 @@
     <TargetFramework>net4.7.2</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Deserializer\Classes\ConstraintClasses\" />
-  </ItemGroup>
-
 </Project>

@@ -10,5 +10,6 @@ namespace itc2021.Deserializer.Classes.ConstraintClasses
     [XmlRoot(ElementName = "BreakConstraints")]
     public class BreakConstraints
     {
+
     }
 }
