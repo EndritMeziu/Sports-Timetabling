@@ -3,6 +3,8 @@ using itc2021.Deserializer.Classes;
 using System;
 using System.IO;
 using Google.OrTools.LinearSolver;
+using itc2021.HelperClasses;
+using System.Linq;
 
 namespace itc2021
 {
@@ -11,12 +13,16 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test5.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
 
-            Solver solver = Solver.CreateSolver("SCIP");
-
+            
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
+            
+                
+            Solver solver = Solver.CreateSolver("SCIP");
+
+            
             // Variables.
             // x[i, j, k ] is an array of 0-1 variables, which will be 1
             Variable[,,] x = new Variable[numTeams, numTeams,numSlots];
@@ -86,16 +92,51 @@ namespace itc2021
                 }
             }
 
-            //Phased constraint
-            for (int i = 0; i < numTeams; i++)
+            ////Phased constraint tofix
+            //for (int i = 0; i < numTeams; i++)
+            //{
+            //    Constraint constraint = solver.MakeConstraint(numTeams - 1, numTeams - 1, "");
+            //    for (int j = 0; j < numTeams; j++)
+            //    {
+            //        for (int k = 0; k < numTeams - 1; k++)
+            //        {
+            //            constraint.SetCoefficient(x[i, j, k], 1);
+            //            constraint.SetCoefficient(x[j, i, k], 1);
+            //        }
+            //    }
+            //}
+
+            //Constraint constraint1 = solver.MakeConstraint(0, 1, "");
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    for(int k=0;k<4;k++)
+            //    {
+            //        constraint1.SetCoefficient(x[0, i, k], 1);
+            //    }
+            //}
+
+            //CA1 constraints
+            var CA1Constraints = obj.Constraints.CapacityConstraints.CA1;
+            CA1Constraints = CA1Constraints.Where(x => x.Type == "HARD").ToList();
+            foreach (var element in CA1Constraints)
             {
-                Constraint constraint = solver.MakeConstraint(numTeams - 1, numTeams - 1, "");
-                for (int j = 0; j < numTeams; j++)
+                var teams = CapacityConstraintsHelper.processTeams(element);
+                var slots = CapacityConstraintsHelper.processSlots(element);
+                foreach (var team in teams)
                 {
-                    for (int k = 0; k < numTeams - 1; k++)
+                    Constraint constraint = solver.MakeConstraint(int.Parse(element.Min), int.Parse(element.Max), "");
+                    foreach (var slot in slots)
                     {
-                        constraint.SetCoefficient(x[i, j, k], 1);
-                        constraint.SetCoefficient(x[j, i, k], 1);
+                        for (int i = 0; i < numTeams; i++)
+                        {
+                            if (i != int.Parse(team))
+                            {
+                                if (element.Mode == "H")
+                                    constraint.SetCoefficient(x[int.Parse(team), i, int.Parse(slot)], 1);
+                                else
+                                    constraint.SetCoefficient(x[i, int.Parse(team), int.Parse(slot)], 1);
+                            }
+                        }
                     }
                 }
             }
