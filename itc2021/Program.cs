@@ -13,7 +13,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test5.xml");
 
             
             int numTeams = obj.Resources.Teams.Team.Count;
@@ -116,8 +116,7 @@ namespace itc2021
             //}
 
             //CA1 constraints
-            var CA1Constraints = obj.Constraints.CapacityConstraints.CA1;
-            CA1Constraints = CA1Constraints.Where(x => x.Type == "HARD").ToList();
+            var CA1Constraints = obj.Constraints.CapacityConstraints.CA1?.Where(x => x.Type == "HARD").ToList();
             foreach (var element in CA1Constraints)
             {
                 var teams = CapacityConstraintsHelper.processTeams(element);
@@ -141,6 +140,34 @@ namespace itc2021
                 }
             }
 
+            //CA2 constraints
+            var CA2Constrainst = obj.Constraints.CapacityConstraints.CA2?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in CA2Constrainst)
+            {
+                var teams1 = CapacityConstraintsHelper.processTeams1(element);
+                var teams2 = CapacityConstraintsHelper.processTeams2(element);
+                var slots = CapacityConstraintsHelper.processSlots(element);
+                foreach(var team1 in teams1)
+                {
+                    Constraint constraint = solver.MakeConstraint(int.Parse(element.Min), int.Parse(element.Max), "");
+                    foreach(var slot in slots)
+                    {
+                        foreach(var team2 in teams2)
+                        {
+                            if (element.Mode1 == "H")
+                                constraint.SetCoefficient(x[int.Parse(team1), int.Parse(team2), int.Parse(slot)], 1);
+                            else if(element.Mode1 == "A")
+                                constraint.SetCoefficient(x[int.Parse(team2), int.Parse(team1), int.Parse(slot)], 1);
+                            else
+                            {
+                                constraint.SetCoefficient(x[int.Parse(team1), int.Parse(team2), int.Parse(slot)], 1);
+                                constraint.SetCoefficient(x[int.Parse(team2), int.Parse(team1), int.Parse(slot)], 1);
+                            }
+
+                        }
+                    }
+                }
+            }
 
 
             Solver.ResultStatus resultStatus = solver.Solve();
