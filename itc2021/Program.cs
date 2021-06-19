@@ -43,7 +43,7 @@ namespace itc2021
                 }
             }
 
-            //Each team plays exaclty once in each round
+            ////Each team plays exaclty once in each round
             for (int k = 0; k < numSlots; k++)
             {
                 for (int i = 0; i < numTeams; i++)
@@ -57,7 +57,7 @@ namespace itc2021
                 }
             }
 
-            //Each team plays exactly numTeams - 1 home games
+            ////Each team plays exactly numTeams - 1 home games
             for (int i = 0; i < numTeams; i++)
             {
                 Constraint constraint = solver.MakeConstraint(numTeams - 1, numTeams - 1, "");
@@ -70,14 +70,14 @@ namespace itc2021
                 }
             }
 
-            //Each team plays only 1H 1A against each of the other teams
+            ////Each team plays only 1H 1A against each of the other teams
             for (int i = 0; i < numTeams; i++)
             {
                 for (int j = 0; j < numTeams; j++)
                 {
                     if (i != j)
                     {
-                        Constraint constraint = solver.MakeConstraint(1,1, "");
+                        Constraint constraint = solver.MakeConstraint(1, 1, "");
                         for (int k = 0; k < numSlots; k++)
                         {
                             constraint.SetCoefficient(x[i, j, k], 1);
@@ -86,6 +86,19 @@ namespace itc2021
                 }
             }
 
+            //Phased constraint
+            for (int i = 0; i < numTeams; i++)
+            {
+                Constraint constraint = solver.MakeConstraint(numTeams - 1, numTeams - 1, "");
+                for (int j = 0; j < numTeams; j++)
+                {
+                    for (int k = 0; k < numTeams - 1; k++)
+                    {
+                        constraint.SetCoefficient(x[i, j, k], 1);
+                        constraint.SetCoefficient(x[j, i, k], 1);
+                    }
+                }
+            }
 
 
 
