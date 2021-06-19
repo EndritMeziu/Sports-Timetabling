@@ -169,6 +169,11 @@ namespace itc2021
                 }
             }
 
+            //CA3 constraints --- todo
+
+            //CA4 constraints
+            var CA4Constraints = obj.Constraints.CapacityConstraints.CA4?.Where(x => x.Type == "HARD").ToList();
+
 
             Solver.ResultStatus resultStatus = solver.Solve();
             

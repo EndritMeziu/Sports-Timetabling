@@ -66,5 +66,40 @@ namespace itc2021.HelperClasses
             return slots;
         }
         #endregion
+
+        #region Capacity Constraints CA4
+        public static List<string> processTeams1(CA4 cA4)
+        {
+            List<string> teams = new List<string>();
+            if (cA4.Teams1.Contains(';'))
+            {
+                return cA4.Teams1.Split(';').ToList();
+            }
+            teams.Add(cA4.Teams1);
+            return teams;
+        }
+
+        public static List<string> processTeams2(CA4 cA4)
+        {
+            List<string> teams = new List<string>();
+            if (cA4.Teams2.Contains(';'))
+            {
+                return cA4.Teams2.Split(';').ToList();
+            }
+            teams.Add(cA4.Teams2);
+            return teams;
+        }
+
+        public static List<string> processSlots(CA4 cA4)
+        {
+            List<string> slots = new List<string>();
+            if (cA4.Slots.Contains(';'))
+            {
+                return cA4.Slots.Split(';').ToList();
+            }
+            slots.Add(cA4.Slots);
+            return slots;
+        }
+        #endregion
     }
 }
