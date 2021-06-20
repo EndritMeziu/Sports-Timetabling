@@ -240,6 +240,7 @@ namespace itc2021
                 }
             }
 
+
             Solver.ResultStatus resultStatus = solver.Solve();
             
             if(resultStatus == Solver.ResultStatus.FEASIBLE || resultStatus == Solver.ResultStatus.OPTIMAL)
