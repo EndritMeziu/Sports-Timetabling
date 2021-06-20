@@ -13,7 +13,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test5.xml");
 
             
             int numTeams = obj.Resources.Teams.Team.Count;
@@ -76,7 +76,7 @@ namespace itc2021
                 }
             }
 
-            ////Each team plays only 1H 1A against each of the other teams
+            //Each team plays only 1H 1A against each of the other teams
             for (int i = 0; i < numTeams; i++)
             {
                 for (int j = 0; j < numTeams; j++)
@@ -106,7 +106,7 @@ namespace itc2021
             //    }
             //}
 
-            
+
 
             //CA1 constraints
             var CA1Constraints = obj.Constraints.CapacityConstraints.CA1?.Where(x => x.Type == "HARD").ToList();
@@ -224,18 +224,18 @@ namespace itc2021
 
             //GA1 constraints
             var GA1Constraints = obj.Constraints.GameConstraints.GA1?.Where(x => x.Type == "HARD").ToList();
-            foreach(var element in GA1Constraints)
+            foreach (var element in GA1Constraints)
             {
                 var meetings = GameConstraintsHelper.processMeetings(element);
                 var slots = GameConstraintsHelper.processSlots(element);
-                foreach(var meeting in meetings)
+                Constraint constraint = solver.MakeConstraint(int.Parse(element.Min), int.Parse(element.Max), "");
+                foreach (var meeting in meetings)
                 {
                     int team1 = int.Parse(meeting.Split(',')[0]);
                     int team2 = int.Parse(meeting.Split(',')[1]);
-                    Constraint constraint = solver.MakeConstraint(int.Parse(element.Min), int.Parse(element.Max), "");
-                    foreach(var slot in slots)
+                    foreach (var slot in slots)
                     {
-                        constraint.SetCoefficient(x[team1, team2, int.Parse(slot)],1);
+                        constraint.SetCoefficient(x[team1, team2, int.Parse(slot)], 1);
                     }
                 }
             }
