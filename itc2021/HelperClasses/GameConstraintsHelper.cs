@@ -11,6 +11,7 @@ namespace itc2021.HelperClasses
         public static List<string> processMeetings(GA1 gA1)
         {
             List<string> meetingsPairs = new List<string>();
+            gA1.Meetings = gA1.Meetings.Remove(gA1.Meetings.Length - 1,1);
             if(gA1.Meetings.Contains(';'))
             {
                 return gA1.Meetings.Split(';').ToList();

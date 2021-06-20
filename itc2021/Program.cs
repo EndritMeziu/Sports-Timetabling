@@ -13,7 +13,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test3.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
 
             
             int numTeams = obj.Resources.Teams.Team.Count;
@@ -218,6 +218,24 @@ namespace itc2021
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            //GA1 constraints
+            var GA1Constraints = obj.Constraints.GameConstraints.GA1?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in GA1Constraints)
+            {
+                var meetings = GameConstraintsHelper.processMeetings(element);
+                var slots = GameConstraintsHelper.processSlots(element);
+                foreach(var meeting in meetings)
+                {
+                    int team1 = int.Parse(meeting.Split(',')[0]);
+                    int team2 = int.Parse(meeting.Split(',')[1]);
+                    Constraint constraint = solver.MakeConstraint(int.Parse(element.Min), int.Parse(element.Max), "");
+                    foreach(var slot in slots)
+                    {
+                        constraint.SetCoefficient(x[team1, team2, int.Parse(slot)],1);
                     }
                 }
             }
