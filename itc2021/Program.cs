@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test6.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -311,6 +311,27 @@ namespace itc2021
                     model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Intp));
                 }
             }
+
+
+            //BR2 Constraint
+            var BR2Constraints = obj.Constraints.BreakConstraints.BR2?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in BR2Constraints)
+            {
+                var teams = BreakConstraintsHelper.processTeams(element);
+                var slots = BreakConstraintsHelper.processSlots(element);
+                IntVar[] vars = new IntVar[teams.Count * (slots.Count*2)];
+                int count = 0;
+                foreach(var team in teams)
+                {
+                    foreach(var slot in slots)
+                    {
+                        vars[count++] = h[int.Parse(team), int.Parse(slot)];
+                        vars[count++] = a[int.Parse(team), int.Parse(slot)];
+                    }
+                }
+                model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Intp));
+            }
+
 
             CpSolver solver = new CpSolver();
             CpSolverStatus status = solver.Solve(model);
