@@ -470,9 +470,38 @@ namespace itc2021
                 }
             }
 
+            printSolution(x, numSlots, numTeams, solver) ;
 
 
+        }
 
+        public static void printSolution(IntVar[,,] x,int numSlots,int numTeams, CpSolver solver)
+        {
+            string solution = "<Solution>\n";
+            solution += "\t<MetaData>\n";
+            solution += "\t\t<InstanceName>" + "ITC2021_Test3.xml" + "</InstanceName>\n";
+            solution += "\t\t<SolutionName>" + "ITC2021_Test3Solution" + "</SolutionName>\n";
+            solution += "\t\t<ObjectiveValue/>\n";
+            solution += "\t</MetaData>\n";
+
+            solution += "\t<Games>\n";
+            for (int k = 0; k < numSlots; k++)
+            {
+                for (int i = 0; i < numTeams; i++)
+                {
+                    for (int j = 0; j < numTeams; j++)
+                    {
+                        if (solver.Value(x[i, j, k]) > 0.5)
+                        {
+                            solution += "\t\t<Game home=\"" + i + "\" away=\"" + j + "\" slot=\"" + k + "\"/>\n";
+                        }
+
+                    }
+                }
+            }
+            solution += "\t</Games>\n";
+            solution += "</Solution>\n";
+            Console.WriteLine(solution);
         }
     }
 }
