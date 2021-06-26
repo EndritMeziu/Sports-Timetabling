@@ -67,6 +67,30 @@ namespace itc2021.HelperClasses
         }
         #endregion
 
+        #region Capacity Constraints CA3
+        public static List<string> processTeams1(CA3 cA3)
+        {
+            List<string> teams = new List<string>();
+            if (cA3.Teams1.Contains(';'))
+            {
+                return cA3.Teams1.Split(';').ToList();
+            }
+            teams.Add(cA3.Teams1);
+            return teams;
+        }
+
+        public static List<string> processTeams2(CA3 cA3)
+        {
+            List<string> teams = new List<string>();
+            if (cA3.Teams2.Contains(';'))
+            {
+                return cA3.Teams2.Split(';').ToList();
+            }
+            teams.Add(cA3.Teams2);
+            return teams;
+        }
+        #endregion
+
         #region Capacity Constraints CA4
         public static List<string> processTeams1(CA4 cA4)
         {
