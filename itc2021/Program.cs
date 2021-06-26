@@ -312,8 +312,6 @@ namespace itc2021
                 }
             }
 
-
-
             CpSolver solver = new CpSolver();
             CpSolverStatus status = solver.Solve(model);
             Console.WriteLine($"Solve status: {status}");
