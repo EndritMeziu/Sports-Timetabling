@@ -364,6 +364,32 @@ namespace itc2021
                     }
                 }
             }
+
+            var SE1Constraints = obj.Constraints.SeparationConstraints.SE1?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in SE1Constraints)
+            {
+                var teams = SeparationConstrainstsHelper.processTeams(element);
+                for (int i = 0; i < teams.Count-1; i++)
+                {
+                    for (int j = i + 1; j < teams.Count; j++)
+                    {
+                        for (int k = 0; k < numSlots - int.Parse(element.Min); k++)
+                        {
+                            int countH = 0;
+                            int countA = 0;
+                            IntVar[] varsH = new IntVar[numSlots];
+                            IntVar[] varsA = new IntVar[numSlots];
+                            for(int k2 = k+1; k2< k+1+int.Parse(element.Min);k2++)
+                            {
+                                varsH[countH++] = x[i, j, k2];
+                                varsA[countA++] = x[j, i, k2];
+                            }
+                            model.Add(LinearExpr.Sum(varsH) == 0).OnlyEnforceIf(x[j, i, k]);
+                            model.Add(LinearExpr.Sum(varsA) == 0).OnlyEnforceIf(x[i, j, k]);
+                        }
+                    }
+                }
+            }
  
 
             CpSolver solver = new CpSolver();
