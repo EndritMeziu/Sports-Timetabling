@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test3.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -173,7 +173,60 @@ namespace itc2021
                 }
             }
 
-            ////CA3 constraints --- todo
+            ////CA3 constraints
+            var CA3Constrains = obj.Constraints.CapacityConstraints.CA3?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in CA3Constrains)
+            {
+                var teams1 = CapacityConstraintsHelper.processTeams1(element);
+                var teams2 = CapacityConstraintsHelper.processTeams2(element);
+                int intp = int.Parse(element.Intp);
+                for (int i = 0; i < teams1.Count; i++)
+                {
+                    for (int l = 0; l <= 2 * (numTeams - 1) - intp; l++)
+                    {
+                        IntVar[] varsH = new IntVar[teams2.Count * intp];
+                        IntVar[] varsA = new IntVar[teams2.Count * intp];
+                        int countH = 0;
+                        int countA = 0;
+                        for (int j = 0; j < teams2.Count; j++)
+                        {
+                            for (int k = l; k < l + intp; k++)
+                            {
+                                if(element.Mode1 == "H")
+                                {
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                }
+                                else if(element.Mode1 == "A")
+                                {
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                }
+                                else if(element.Mode2 == "HA")
+                                {
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                }
+                            }
+                        }
+
+                        if(element.Type == "H")
+                        {
+                            model.Add(LinearExpr.Sum(varsH) <= int.Parse(element.Max));
+                            model.Add(LinearExpr.Sum(varsH) >= int.Parse(element.Min));
+                        }
+                        else if(element.Type == "A")
+                        {
+                            model.Add(LinearExpr.Sum(varsA) <= int.Parse(element.Max));
+                            model.Add(LinearExpr.Sum(varsA) >= int.Parse(element.Min));
+                        }
+                        else if(element.Type == "HA")
+                        {
+                            model.Add(LinearExpr.Sum(varsH) + LinearExpr.Sum(varsA) <= int.Parse(element.Max));
+                            model.Add(LinearExpr.Sum(varsH) + LinearExpr.Sum(varsA) >= int.Parse(element.Min));
+                        }
+                    }
+                }
+            }
+
 
             ////CA4 constraints
             var CA4Constraints = obj.Constraints.CapacityConstraints.CA4?.Where(x => x.Type == "HARD").ToList();
