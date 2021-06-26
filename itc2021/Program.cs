@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test6.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -332,6 +332,37 @@ namespace itc2021
                 model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Intp));
             }
 
+            //FA2 Constraint
+            var FA2Constraints = obj.Constraints.FairnessConstraints.FA2?.Where(x => x.Type == "HARD").ToList();
+            foreach(var element in FA2Constraints)
+            {
+                var teams = FairnessConstraintsHelper.processTeams(element);
+                var slots = FairnessConstraintsHelper.processSlots(element);
+                for (int i = 0; i < teams.Count; i++)
+                {
+                    for (int j = i + 1; j < teams.Count; j++)
+                    {
+                        for (int k = 0; k < slots.Count; k++)
+                        {
+                            IntVar[] varsSum = new IntVar[(k + 1) * numTeams];
+                            IntVar[] varsDif = new IntVar[(k + 1) * numTeams];
+                            int countSum = 0;
+                            int countDif = 0;
+                            for (int k2 = 0; k2 <= k; k2++)
+                            {
+                                for (int j2 = 0; j2 < numTeams; j2++)
+                                {
+                                    varsSum[countSum++] = x[int.Parse(teams[i]), j2, k2];
+                                    varsDif[countDif++] = x[int.Parse(teams[j]), j2, k2];                                    
+                                }
+                            }
+                            model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) <= int.Parse(element.Intp));
+                            model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) >= -int.Parse(element.Intp));
+                        }
+
+                    }
+                }
+            }
 
             CpSolver solver = new CpSolver();
             CpSolverStatus status = solver.Solve(model);
