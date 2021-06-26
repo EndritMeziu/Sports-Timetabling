@@ -358,11 +358,13 @@ namespace itc2021
                             }
                             model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) <= int.Parse(element.Intp));
                             model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) >= -int.Parse(element.Intp));
+
                         }
 
                     }
                 }
             }
+ 
 
             CpSolver solver = new CpSolver();
             CpSolverStatus status = solver.Solve(model);
