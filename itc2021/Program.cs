@@ -2,10 +2,10 @@
 using itc2021.Deserializer.Classes;
 using System;
 using System.IO;
-//using Google.OrTools.LinearSolver;
 using itc2021.HelperClasses;
 using System.Linq;
 using Google.OrTools.Sat;
+using System.Collections.Generic;
 
 namespace itc2021
 {
@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test5.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test4.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -44,6 +44,7 @@ namespace itc2021
                 {
                     vars[j] = x[i,i, j];
                 }
+                model.Add(LinearExpr.Sum(vars) + LinearExpr.Sum(vars) <= 2);
                 model.Add(LinearExpr.Sum(vars) == 0);
             }
 
@@ -257,6 +258,60 @@ namespace itc2021
                 model.Add(LinearExpr.Sum(vars) >= int.Parse(element.Min));
                 model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Max));
             }
+
+
+            ////Break Contraints
+            IntVar[,] h = new IntVar[numTeams, 2*(numTeams-1)];
+            IntVar[,] a = new IntVar[numTeams, 2*(numTeams-1)];
+
+            h[0, 0] = model.NewIntVar(0, 0, "0,0");
+            a[0, 0] = model.NewIntVar(0, 0, "0,0");
+            
+            for (int i = 0; i < numTeams; i++)
+            {
+                for (int k = 1; k < 2 * (numTeams - 1); k++)
+                {
+                    h[i,k] = model.NewIntVar(0, 1, $"{i},{k}");
+                    a[i,k] = model.NewIntVar(0, 1, $"{i},{k}");
+                    IntVar[] varsh = new IntVar[2 * numTeams];
+                    int counth = 0;
+                    int counta = 0;
+                    IntVar[] varsa = new IntVar[2 * numTeams];
+                    for (int j = 0; j < numTeams; j++)
+                    {
+                        varsh[counth++] = x[i,j,k - 1];
+                        varsh[counth++] = x[i, j, k];
+
+                        varsa[counta++] = x[j, i, k - 1];
+                        varsa[counta++] = x[j, i, k];
+                    }
+
+                    model.Add(LinearExpr.Sum(varsh) - 1 <= h[i, k]);
+                    model.Add(LinearExpr.Sum(varsa) - 1 <= a[i, k]);
+
+                }
+            }
+
+            //BR1 Constraint
+            var BR1Constraints = obj.Constraints.BreakConstraints.BR1?.Where(x => x.Type == "HARD").ToList();
+            foreach (var element in BR1Constraints)
+            {
+                var teams = BreakConstraintsHelper.processTeams(element);
+                var slots = BreakConstraintsHelper.processSlots(element);
+                foreach (var team in teams)
+                {
+                    //Constraint constraint = solver.MakeConstraint(0, int.Parse(element.Intp), "");
+                    IntVar[] vars = new IntVar[slots.Count *2];
+                    int count = 0;
+                    foreach (var slot in slots)
+                    {
+                        vars[count++] = h[int.Parse(team), int.Parse(slot)];
+                        vars[count++] = a[int.Parse(team), int.Parse(slot)];
+                    }
+                    model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Intp));
+                }
+            }
+
 
 
             CpSolver solver = new CpSolver();
