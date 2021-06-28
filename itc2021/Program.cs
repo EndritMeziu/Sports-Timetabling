@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test3.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Early_2.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -97,20 +97,24 @@ namespace itc2021
                 }
             }
 
-            //////Phased constraint tofix
-            ////for (int i = 0; i < numTeams; i++)
-            ////{
-            ////    Constraint constraint = solver.MakeConstraint(numTeams - 1, numTeams - 1, "");
-            ////    for (int j = 0; j < numTeams; j++)
-            ////    {
-            ////        for (int k = 0; k < numTeams - 1; k++)
-            ////        {
-            ////            constraint.SetCoefficient(x[i, j, k], 1);
-            ////            constraint.SetCoefficient(x[j, i, k], 1);
-            ////        }
-            ////    }
-            ////}
-
+            if (obj.Structure.Format.GameMode.Text == "P")
+            {
+                //Phased constraint tofix
+                for (int i = 0; i < numTeams-1; i++)
+                {
+                    for (int j = i + 1; j < numTeams; j++)
+                    {
+                        IntVar[] vars = new IntVar[(numTeams - 1) * (numTeams - 1)];
+                        int count = 0;
+                        for (int k = 0; k < numTeams - 1; k++)
+                        {
+                            vars[count++] = x[i, j, k];
+                            vars[count++] = x[j, i, k];
+                        }
+                        model.Add(LinearExpr.Sum(vars) == 1);
+                    }
+                }
+            }
 
 
             ////CA1 constraints
@@ -198,12 +202,12 @@ namespace itc2021
                                 }
                                 else if(element.Mode1 == "A")
                                 {
-                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsH[countA++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
                                 }
                                 else if(element.Mode2 == "HA")
                                 {
                                     varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
-                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
                                 }
                             }
                         }
