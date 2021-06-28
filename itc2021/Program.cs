@@ -497,7 +497,7 @@ namespace itc2021
                     {
                         if (solver.Value(x[i, j, k]) > 0.5)
                         {
-                            solution += "\t\t<Game home=\"" + i + "\" away=\"" + j + "\" slot=\"" + k + "\"/>\n";
+                            solution += "\t\t<ScheduledMatch home=\"" + i + "\" away=\"" + j + "\" slot=\"" + k + "\"/>\n";
                         }
 
                     }
