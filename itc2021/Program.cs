@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Early_2.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test6.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -44,23 +44,20 @@ namespace itc2021
                 {
                     vars[j] = x[i,i, j];
                 }
-                model.Add(LinearExpr.Sum(vars) + LinearExpr.Sum(vars) <= 2);
                 model.Add(LinearExpr.Sum(vars) == 0);
             }
 
-            //////Each team plays exaclty once in each round
+            //////Each team plays exactly once in each round
             for (int k = 0; k < numSlots; k++)
             {
                 for (int i = 0; i < numTeams; i++)
                 {
                     IntVar[] vars = new IntVar[numTeams*2];
+                    int count = 0;
                     for (int j = 0; j < numTeams; j++)
                     {
-                        vars[j] = x[i, j, k];
-                    }
-                    for (int j = 0; j < numTeams; j++)
-                    {
-                        vars[j+numTeams] = x[j, i, k];
+                        vars[count++] = x[i, j, k];
+                        vars[count++] = x[j, i, k];
                     }
                     model.Add(LinearExpr.Sum(vars) == 1);
                 }
@@ -70,11 +67,12 @@ namespace itc2021
             for (int i = 0; i < numTeams; i++)
             {
                 IntVar[] vars = new IntVar[numTeams * numSlots];
+                int count = 0;
                 for (int j = 0; j < numTeams; j++)
                 {
                     for (int k = 0; k < numSlots; k++)
                     {
-                        vars[j * numSlots + k] = x[i, j, k];
+                        vars[count++] = x[i, j, k];
                     }
                 }
                 model.Add(LinearExpr.Sum(vars) == numTeams - 1);
@@ -99,7 +97,7 @@ namespace itc2021
 
             if (obj.Structure.Format.GameMode.Text == "P")
             {
-                //Phased constraint tofix
+                //Phased constraint
                 for (int i = 0; i < numTeams-1; i++)
                 {
                     for (int j = i + 1; j < numTeams; j++)
@@ -134,11 +132,10 @@ namespace itc2021
                             if (i != int.Parse(team))
                             {
                                 if (element.Mode == "H")
-                                    vars[count] = x[int.Parse(team), i, int.Parse(slot)];
+                                    vars[count++] = x[int.Parse(team), i, int.Parse(slot)];
                                 else
-                                    vars[count] = x[i, int.Parse(team), int.Parse(slot)];
+                                    vars[count++] = x[i, int.Parse(team), int.Parse(slot)];
                             }
-                            count++;
                         }
                     }
                     model.Add(LinearExpr.Sum(vars) >= int.Parse(element.Min));
@@ -155,7 +152,7 @@ namespace itc2021
                 var slots = CapacityConstraintsHelper.processSlots(element);
                 foreach (var team1 in teams1)
                 {
-                    IntVar[] vars = new IntVar[slots.Count * teams2.Count*2];
+                    IntVar[] vars = new IntVar[slots.Count * (teams2.Count*2)];
                     int count = 0;
                     foreach (var slot in slots)
                     {
@@ -202,12 +199,12 @@ namespace itc2021
                                 }
                                 else if(element.Mode1 == "A")
                                 {
-                                    varsH[countA++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams2[i]), int.Parse(teams1[j]), k];
                                 }
                                 else if(element.Mode2 == "HA")
                                 {
                                     varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
-                                    varsA[countA++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams2[i]), int.Parse(teams1[j]), k];
                                 }
                             }
                         }
@@ -357,7 +354,6 @@ namespace itc2021
                 var slots = BreakConstraintsHelper.processSlots(element);
                 foreach (var team in teams)
                 {
-                    //Constraint constraint = solver.MakeConstraint(0, int.Parse(element.Intp), "");
                     IntVar[] vars = new IntVar[slots.Count *2];
                     int count = 0;
                     foreach (var slot in slots)
