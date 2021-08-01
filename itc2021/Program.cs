@@ -14,7 +14,7 @@ namespace itc2021
         static void Main(string[] args)
         {
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test6.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test1.xml");
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;
@@ -24,6 +24,10 @@ namespace itc2021
             // Variables.
             IntVar[,,] x = new IntVar[numTeams, numTeams, numSlots];
             // x[i, j, k ] is an array of 0-1 variables, which will be 1
+            List<IntVar> sofCons = new List<IntVar>();
+            List<int> penalties = new List<int>();
+
+
             for (int i = 0; i < numTeams; ++i)
             {
                 for (int j = 0; j < numTeams; ++j)
@@ -143,6 +147,37 @@ namespace itc2021
                 }
             }
 
+            //Soft CA1 constraints
+            CA1Constraints = obj.Constraints.CapacityConstraints.CA1?.Where(x => x.Type == "SOFT").ToList();
+            foreach(var element in CA1Constraints)
+            {
+                var teams = CapacityConstraintsHelper.processTeams(element);
+                var slots = CapacityConstraintsHelper.processSlots(element);
+                foreach (var team in teams)
+                {
+                    IntVar[] vars = new IntVar[slots.Count * numTeams];
+                    int count = 0;
+                    foreach (var slot in slots)
+                    {
+                        for (int i = 0; i < numTeams; i++)
+                        {
+                            if (i != int.Parse(team))
+                            {
+                                if (element.Mode == "H")
+                                    vars[count++] = x[int.Parse(team), i, int.Parse(slot)];
+                                else
+                                    vars[count++] = x[i, int.Parse(team), int.Parse(slot)];
+                            }
+                        }
+                    }
+                    sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                    penalties.Add(int.Parse(element.Penalty));
+                    model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count-1] <= int.Parse(element.Max));
+                }
+            }
+
+
+
             ////CA2 constraints
             var CA2Constrainst = obj.Constraints.CapacityConstraints.CA2?.Where(x => x.Type == "HARD").ToList();
             foreach (var element in CA2Constrainst)
@@ -174,6 +209,42 @@ namespace itc2021
                 }
             }
 
+
+            ////Soft CA2
+            CA2Constrainst = obj.Constraints.CapacityConstraints.CA2?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in CA2Constrainst)
+            {
+                var teams1 = CapacityConstraintsHelper.processTeams1(element);
+                var teams2 = CapacityConstraintsHelper.processTeams2(element);
+                var slots = CapacityConstraintsHelper.processSlots(element);
+                foreach (var team1 in teams1)
+                {
+                    IntVar[] vars = new IntVar[slots.Count * (teams2.Count * 2)];
+                    int count = 0;
+                    foreach (var slot in slots)
+                    {
+                        foreach (var team2 in teams2)
+                        {
+                            if (element.Mode1 == "H")
+                                vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                            else if (element.Mode1 == "A")
+                                vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                            else
+                            {
+                                vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                                vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                            }
+                        }
+                    }
+                    sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                    penalties.Add(int.Parse(element.Penalty));
+                    model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                }
+            }
+
+
+
+
             ////CA3 constraints
             var CA3Constrains = obj.Constraints.CapacityConstraints.CA3?.Where(x => x.Type == "HARD").ToList();
             foreach(var element in CA3Constrains)
@@ -199,12 +270,12 @@ namespace itc2021
                                 }
                                 else if(element.Mode1 == "A")
                                 {
-                                    varsA[countA++] = x[int.Parse(teams2[i]), int.Parse(teams1[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams2[j]), int.Parse(teams1[i]), k];
                                 }
                                 else if(element.Mode2 == "HA")
                                 {
                                     varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
-                                    varsA[countA++] = x[int.Parse(teams2[i]), int.Parse(teams1[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams2[j]), int.Parse(teams1[i]), k];
                                 }
                             }
                         }
@@ -223,6 +294,64 @@ namespace itc2021
                         {
                             model.Add(LinearExpr.Sum(varsH) + LinearExpr.Sum(varsA) <= int.Parse(element.Max));
                             model.Add(LinearExpr.Sum(varsH) + LinearExpr.Sum(varsA) >= int.Parse(element.Min));
+                        }
+                    }
+                }
+            }
+
+            ////Soft CA3
+            CA3Constrains = obj.Constraints.CapacityConstraints.CA3?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in CA3Constrains)
+            {
+                var teams1 = CapacityConstraintsHelper.processTeams1(element);
+                var teams2 = CapacityConstraintsHelper.processTeams2(element);
+                int intp = int.Parse(element.Intp);
+                for (int i = 0; i < teams1.Count; i++)
+                {
+                    for (int l = 0; l <= 2 * (numTeams - 1) - intp; l++)
+                    {
+                        IntVar[] varsH = new IntVar[teams2.Count * intp];
+                        IntVar[] varsA = new IntVar[teams2.Count * intp];
+                        int countH = 0;
+                        int countA = 0;
+                        for (int j = 0; j < teams2.Count; j++)
+                        {
+                            for (int k = l; k < l + intp; k++)
+                            {
+                                if (element.Mode1 == "H")
+                                {
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                }
+                                else if (element.Mode1 == "A")
+                                {
+                                    varsA[countA++] = x[int.Parse(teams2[j]), int.Parse(teams1[i]), k];
+                                }
+                                else if (element.Mode2 == "HA")
+                                {
+                                    varsH[countH++] = x[int.Parse(teams1[i]), int.Parse(teams2[j]), k];
+                                    varsA[countA++] = x[int.Parse(teams2[j]), int.Parse(teams1[i]), k];
+                                }
+                            }
+                        }
+
+                        if (element.Type == "H")
+                        {
+                            sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                            penalties.Add(int.Parse(element.Penalty));
+                            model.Add(LinearExpr.Sum(varsH) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                        }
+                        else if (element.Type == "A")
+                        {
+                            sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                            penalties.Add(int.Parse(element.Penalty));
+                            model.Add(LinearExpr.Sum(varsA) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                            
+                        }
+                        else if (element.Type == "HA")
+                        {
+                            sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                            penalties.Add(int.Parse(element.Penalty));
+                            model.Add(LinearExpr.Sum(varsH) + LinearExpr.Sum(varsA) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
                         }
                     }
                 }
@@ -292,6 +421,73 @@ namespace itc2021
                 }
             }
 
+
+            //// Soft CA4
+            CA4Constraints = obj.Constraints.CapacityConstraints.CA4?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in CA4Constraints)
+            {
+                var teams1 = CapacityConstraintsHelper.processTeams1(element);
+                var teams2 = CapacityConstraintsHelper.processTeams2(element);
+                var slots = CapacityConstraintsHelper.processSlots(element);
+                if (element.Mode2 == "GLOBAL")
+                {
+                    IntVar[] vars = new IntVar[teams1.Count * slots.Count * (teams2.Count * 2)];
+                    int count = 0;
+                    foreach (var team1 in teams1)
+                    {
+                        foreach (var slot in slots)
+                        {
+                            foreach (var team2 in teams2)
+                            {
+                                if (team1 != team2)
+                                {
+                                    if (element.Mode1 == "H")
+                                        vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                                    else if (element.Mode1 == "A")
+                                        vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                                    else
+                                    {
+                                        vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                                        vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                    penalties.Add(int.Parse(element.Penalty));
+                    model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                }
+                else
+                {
+                    foreach (var slot in slots)
+                    {
+                        IntVar[] vars = new IntVar[teams1.Count * (teams2.Count * 2)];
+                        int count = 0;
+                        foreach (var team1 in teams1)
+                        {
+                            foreach (var team2 in teams2)
+                            {
+                                if (element.Mode1 == "H")
+                                    vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                                else if (element.Mode1 == "A")
+                                    vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                                else
+                                {
+                                    vars[count++] = x[int.Parse(team1), int.Parse(team2), int.Parse(slot)];
+                                    vars[count++] = x[int.Parse(team2), int.Parse(team1), int.Parse(slot)];
+                                }
+                            }
+                        }
+                        sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                        penalties.Add(int.Parse(element.Penalty));
+                        model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                    }
+                }
+            }
+
+
             ////GA1 constraints
             var GA1Constraints = obj.Constraints.GameConstraints.GA1?.Where(x => x.Type == "HARD").ToList();
             foreach (var element in GA1Constraints)
@@ -312,6 +508,30 @@ namespace itc2021
                 model.Add(LinearExpr.Sum(vars) >= int.Parse(element.Min));
                 model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Max));
             }
+
+            ////Soft GA1
+            GA1Constraints = obj.Constraints.GameConstraints.GA1?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in GA1Constraints)
+            {
+                var meetings = GameConstraintsHelper.processMeetings(element);
+                var slots = GameConstraintsHelper.processSlots(element);
+                IntVar[] vars = new IntVar[meetings.Count * slots.Count];
+                int count = 0;
+                foreach (var meeting in meetings)
+                {
+                    int team1 = int.Parse(meeting.Split(',')[0]);
+                    int team2 = int.Parse(meeting.Split(',')[1]);
+                    foreach (var slot in slots)
+                    {
+                        vars[count++] = x[team1, team2, int.Parse(slot)];
+                    }
+                }
+                sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                penalties.Add(int.Parse(element.Penalty));
+                model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Max));
+                model.Add(LinearExpr.Sum(vars) + sofCons[sofCons.Count - 1] >= int.Parse(element.Min));
+            }
+
 
 
             ////Break Contraints
@@ -366,6 +586,27 @@ namespace itc2021
             }
 
 
+            //Soft BR1
+            BR1Constraints = obj.Constraints.BreakConstraints.BR1?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in BR1Constraints)
+            {
+                var teams = BreakConstraintsHelper.processTeams(element);
+                var slots = BreakConstraintsHelper.processSlots(element);
+                foreach (var team in teams)
+                {
+                    IntVar[] vars = new IntVar[slots.Count * 2];
+                    int count = 0;
+                    foreach (var slot in slots)
+                    {
+                        vars[count++] = h[int.Parse(team), int.Parse(slot)];
+                        vars[count++] = a[int.Parse(team), int.Parse(slot)];
+                    }
+                    sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                    penalties.Add(int.Parse(element.Penalty));
+                    model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Intp));
+                }
+            }
+
             //BR2 Constraint
             var BR2Constraints = obj.Constraints.BreakConstraints.BR2?.Where(x => x.Type == "HARD").ToList();
             foreach(var element in BR2Constraints)
@@ -384,6 +625,29 @@ namespace itc2021
                 }
                 model.Add(LinearExpr.Sum(vars) <= int.Parse(element.Intp));
             }
+
+            //Soft BR2
+            BR2Constraints = obj.Constraints.BreakConstraints.BR2?.Where(x => x.Type == "Soft").ToList();
+            foreach (var element in BR2Constraints)
+            {
+                var teams = BreakConstraintsHelper.processTeams(element);
+                var slots = BreakConstraintsHelper.processSlots(element);
+                IntVar[] vars = new IntVar[teams.Count * (slots.Count * 2)];
+                int count = 0;
+                foreach (var team in teams)
+                {
+                    foreach (var slot in slots)
+                    {
+                        vars[count++] = h[int.Parse(team), int.Parse(slot)];
+                        vars[count++] = a[int.Parse(team), int.Parse(slot)];
+                    }
+                }
+                sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                penalties.Add(int.Parse(element.Penalty));
+                model.Add(LinearExpr.Sum(vars) - sofCons[sofCons.Count - 1] <= int.Parse(element.Intp));
+
+            }
+
 
             //FA2 Constraint
             var FA2Constraints = obj.Constraints.FairnessConstraints.FA2?.Where(x => x.Type == "HARD").ToList();
@@ -418,6 +682,41 @@ namespace itc2021
                 }
             }
 
+            //Soft FA2
+            FA2Constraints = obj.Constraints.FairnessConstraints.FA2?.Where(x => x.Type == "SOFT").ToList();
+            foreach (var element in FA2Constraints)
+            {
+                var teams = FairnessConstraintsHelper.processTeams(element);
+                var slots = FairnessConstraintsHelper.processSlots(element);
+                for (int i = 0; i < teams.Count; i++)
+                {
+                    for (int j = i + 1; j < teams.Count; j++)
+                    {
+                        for (int k = 0; k < slots.Count; k++)
+                        {
+                            IntVar[] varsSum = new IntVar[(k + 1) * numTeams];
+                            IntVar[] varsDif = new IntVar[(k + 1) * numTeams];
+                            int countSum = 0;
+                            int countDif = 0;
+                            for (int k2 = 0; k2 <= k; k2++)
+                            {
+                                for (int j2 = 0; j2 < numTeams; j2++)
+                                {
+                                    varsSum[countSum++] = x[int.Parse(teams[i]), j2, k2];
+                                    varsDif[countDif++] = x[int.Parse(teams[j]), j2, k2];
+                                }
+                            }
+                            sofCons.Add(model.NewIntVar(0, int.MaxValue, ""));
+                            penalties.Add(int.Parse(element.Penalty));
+                            model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) - sofCons[sofCons.Count - 1] <= int.Parse(element.Intp));
+                            model.Add(LinearExpr.Sum(varsSum) - LinearExpr.Sum(varsDif) + sofCons[sofCons.Count - 1] >= -int.Parse(element.Intp));
+                        }
+
+                    }
+                }
+            }
+
+
             var SE1Constraints = obj.Constraints.SeparationConstraints.SE1?.Where(x => x.Type == "HARD").ToList();
             foreach(var element in SE1Constraints)
             {
@@ -443,9 +742,18 @@ namespace itc2021
                     }
                 }
             }
- 
+
+
+
+            List<LinearExpr> linearExprs = new List<LinearExpr>();
+            for (int i = 0; i < penalties.Count; i++)
+            {
+                var elem = penalties[i] * sofCons[i];
+                linearExprs.Add(elem);
+            }
 
             CpSolver solver = new CpSolver();
+            model.Minimize(LinearExpr.Sum(linearExprs));
             CpSolverStatus status = solver.Solve(model);
             Console.WriteLine($"Solve status: {status}");
 
