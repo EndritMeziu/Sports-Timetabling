@@ -13,8 +13,14 @@ namespace itc2021
     {
         static void Main(string[] args)
         {
+            if(args.Length < 1)
+            {
+                Console.WriteLine("You should specify instance path");
+                return;
+            }
+            string inputFilePath = args[0];
             XmlDeserializer deserializer = new XmlDeserializer();
-            var obj = deserializer.DeserializeXml<Instance>(@"C:\Users\USER\Desktop\AI Project\SportsTimeTabling\Test Instances EM\ITC2021_Test1.xml");
+            var obj = deserializer.DeserializeXml<Instance>(@inputFilePath);
 
             int numTeams = obj.Resources.Teams.Team.Count;
             int numSlots = obj.Resources.Slots.Slot.Count;

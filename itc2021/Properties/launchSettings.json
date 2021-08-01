@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "itc2021": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\USER\\Desktop\\AI Project\\SportsTimeTabling\\Test Instances EM\\ITC2021_Test1.xml\""
+    }
+  }
+}
